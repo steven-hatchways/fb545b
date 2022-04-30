@@ -7,6 +7,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { SidebarContainer } from '../components/Sidebar';
 import { ActiveChat } from '../components/ActiveChat';
 import { SocketContext } from '../context/socket';
+import moment from 'moment';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -24,6 +25,12 @@ const Home = ({ user, logout }) => {
 
   const classes = useStyles();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const sortMessagesInConversations = (conversations) => {
+    conversations.forEach(newConvo => {
+        newConvo.messages.sort((a, b) => moment(a.createdAt).diff(b.createdAt));
+      });
+  };
 
   const addSearchedUsers = (users) => {
     const currentUsers = {};
@@ -87,6 +94,7 @@ const Home = ({ user, logout }) => {
           convo.id = message.conversationId;
         }
       });
+      sortMessagesInConversations(conversations);
       setConversations([...conversations]);
     },
     [setConversations, conversations]
@@ -103,6 +111,7 @@ const Home = ({ user, logout }) => {
           messages: [message],
         };
         newConvo.latestMessageText = message.text;
+        sortMessagesInConversations(conversations);
         setConversations((prev) => [newConvo, ...prev]);
       }
 
@@ -112,6 +121,7 @@ const Home = ({ user, logout }) => {
           convo.latestMessageText = message.text;
         }
       });
+      sortMessagesInConversations(conversations);
       setConversations([...conversations]);
     },
     [setConversations, conversations]
@@ -183,6 +193,7 @@ const Home = ({ user, logout }) => {
     const fetchConversations = async () => {
       try {
         const { data } = await axios.get('/api/conversations');
+        sortMessagesInConversations(data);
         setConversations(data);
       } catch (error) {
         console.error(error);
