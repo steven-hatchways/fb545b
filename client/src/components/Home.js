@@ -7,7 +7,6 @@ import { makeStyles } from '@material-ui/core/styles';
 import { SidebarContainer } from '../components/Sidebar';
 import { ActiveChat } from '../components/ActiveChat';
 import { SocketContext } from '../context/socket';
-import moment from 'moment';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -28,7 +27,16 @@ const Home = ({ user, logout }) => {
 
   const sortMessagesInConversations = (conversations) => {
     conversations.forEach(newConvo => {
-        newConvo.messages.sort((a, b) => moment(a.createdAt).diff(b.createdAt));
+        newConvo.messages.sort((a, b) => {
+          if(a.createdAt < b.createdAt) {
+            return -1;
+          }
+          if(a.createdAt > b.createdAt) {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
       });
   };
 
