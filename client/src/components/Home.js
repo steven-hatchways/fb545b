@@ -94,7 +94,6 @@ const Home = ({ user, logout }) => {
           convo.id = message.conversationId;
         }
       });
-      sortMessagesInConversations(conversations);
       setConversations([...conversations]);
     },
     [setConversations, conversations]
@@ -121,7 +120,6 @@ const Home = ({ user, logout }) => {
           convo.latestMessageText = message.text;
         }
       });
-      sortMessagesInConversations(conversations);
       setConversations([...conversations]);
     },
     [setConversations, conversations]
