@@ -110,7 +110,6 @@ const Home = ({ user, logout }) => {
           messages: [message],
         };
         newConvo.latestMessageText = message.text;
-        sortMessagesInConversations(conversations);
         setConversations((prev) => [newConvo, ...prev]);
       }
 
