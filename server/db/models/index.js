@@ -10,6 +10,9 @@ Conversation.belongsTo(User, { as: "user2" });
 Message.belongsTo(Conversation);
 Conversation.hasMany(Message);
 
+Conversation.belongsTo(Message, { as: "user1LastReadMessage", constraints: false});
+Conversation.belongsTo(Message, { as: "user2LastReadMessage", constraints: false});
+
 module.exports = {
   User,
   Conversation,
