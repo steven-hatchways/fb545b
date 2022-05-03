@@ -49,10 +49,19 @@ const Home = ({ user, logout }) => {
     });
 
     const newState = [...conversations];
-    users.forEach((user) => {
+    users.forEach((u) => {
       // only create a fake convo if we don't already have a convo with this user
-      if (!currentUsers[user.id]) {
-        let fakeConvo = { otherUser: user, messages: [] };
+      if (!currentUsers[u.id]) {
+        let fakeConvo = {
+          otherUser: u,
+          currentUser: {
+            id: user.id,
+            lastReadMessage: {
+              id: -1
+            }
+          },
+          messages: []
+        };
         newState.push(fakeConvo);
       }
     });
@@ -69,11 +78,24 @@ const Home = ({ user, logout }) => {
     return data;
   };
 
+  const saveLastReadMessage = async (conversationId, messageId) => {
+    const data = { conversationId, messageId };
+    await axios.post(`/api/conversations/saveLastReadMessage`, data);
+  };
+
   const sendMessage = (data, body) => {
     socket.emit('new-message', {
       message: data.message,
       recipientId: body.recipientId,
       sender: data.sender,
+    });
+  };
+
+  const sendLastReadMessage = (conversationId, messageId) => {
+    socket.emit("last-read-message", {
+      conversationId,
+      messageId,
+      userId: user.id
     });
   };
 
@@ -92,6 +114,53 @@ const Home = ({ user, logout }) => {
       console.error(error);
     }
   };
+
+  const postLastReadMessage = async (conversationId, messageId) => {
+    try {
+      await saveLastReadMessage(conversationId, messageId);
+      sendLastReadMessage(conversationId, messageId);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const markConversationMessagesAsRead = useCallback(async (conversation) => {
+    const latestMessageFromOtherUser = conversation.messages
+        .filter(m => m.senderId === conversation.otherUser.id)
+        .reduce((previousMessage, currentMessage) => {
+          if(currentMessage.id > previousMessage.id) {
+            return currentMessage;
+          }
+          else {
+            return previousMessage;
+          }
+    }, { id: -1 });
+
+    if(latestMessageFromOtherUser.id > -1) {
+      await postLastReadMessage(conversation.id, latestMessageFromOtherUser.id);
+
+      //update our local copy of current user's last read message
+      setConversations((prev) => {
+        return prev.map(convo => {
+          if(convo.id === conversation.id && convo.currentUser.lastReadMessage?.id !== latestMessageFromOtherUser.id) {
+            const convoCopy = {
+              ...convo,
+              currentUser: {
+                ...convo.currentUser,
+                lastReadMessage: {
+                  id: latestMessageFromOtherUser.id
+                }
+              }
+            };
+            return convoCopy;
+          }
+          else {
+            return convo;
+          }
+        });
+      });
+    }
+  }, [setConversations, conversations]);
 
   const addNewConvo = useCallback(
     (recipientId, message) => {
@@ -120,6 +189,12 @@ const Home = ({ user, logout }) => {
         const newConvo = {
           id: message.conversationId,
           otherUser: sender,
+          currentUser: {
+            id: user.id,
+            lastReadMessage: {
+              id: -1
+            }
+          },
           messages: [message],
         };
         newConvo.latestMessageText = message.text;
@@ -129,7 +204,7 @@ const Home = ({ user, logout }) => {
       setConversations((prev) =>
         prev.map((convo) => {
           if (convo.id === message.conversationId) {
-            const convoCopy = { ...convo, message: [...convo.messages] };
+            const convoCopy = { ...convo, messages: [...convo.messages] };
             convoCopy.messages.push(message);
             convoCopy.latestMessageText = message.text;
             return convoCopy;
@@ -141,6 +216,30 @@ const Home = ({ user, logout }) => {
     },
     [setConversations, conversations]
   );
+
+  const updateLastReadMessage = (data) => {
+    const {conversationId, messageId, userId} = data;
+
+    setConversations( (prev) =>
+      prev.map((convo) => {
+        if(convo.id === conversationId && convo.otherUser.id === userId && convo.otherUser.lastReadMessage?.id !== messageId) {
+          const convoCopy = {
+            ...convo,
+            otherUser: {
+              ...convo.otherUser,
+              lastReadMessage: {
+                id: messageId
+              }
+            }
+          };
+          return convoCopy;
+        }
+        else {
+          return convo;
+        }
+      })
+    );
+  };
 
   const setActiveChat = (username) => {
     setActiveConversation(username);
@@ -181,6 +280,7 @@ const Home = ({ user, logout }) => {
     socket.on('add-online-user', addOnlineUser);
     socket.on('remove-offline-user', removeOfflineUser);
     socket.on('new-message', addMessageToConversation);
+    socket.on('last-read-message', updateLastReadMessage);
 
     return () => {
       // before the component is destroyed
@@ -188,6 +288,7 @@ const Home = ({ user, logout }) => {
       socket.off('add-online-user', addOnlineUser);
       socket.off('remove-offline-user', removeOfflineUser);
       socket.off('new-message', addMessageToConversation);
+      socket.off('last-read-message', updateLastReadMessage);
     };
   }, [addMessageToConversation, addOnlineUser, removeOfflineUser, socket]);
 
@@ -242,6 +343,7 @@ const Home = ({ user, logout }) => {
           conversations={conversations}
           user={user}
           postMessage={postMessage}
+          markConversationMessagesAsRead={markConversationMessagesAsRead}
         />
       </Grid>
     </>
