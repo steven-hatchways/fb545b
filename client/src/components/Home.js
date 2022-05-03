@@ -200,19 +200,20 @@ const Home = ({ user, logout }) => {
         newConvo.latestMessageText = message.text;
         setConversations((prev) => [newConvo, ...prev]);
       }
-
-      setConversations((prev) =>
-        prev.map((convo) => {
-          if (convo.id === message.conversationId) {
-            const convoCopy = { ...convo, messages: [...convo.messages] };
-            convoCopy.messages.push(message);
-            convoCopy.latestMessageText = message.text;
-            return convoCopy;
-          } else {
-            return convo;
-          }
-        })
-      );
+      else {
+        setConversations((prev) =>
+            prev.map((convo) => {
+              if (convo.id === message.conversationId) {
+                const convoCopy = { ...convo, messages: [...convo.messages] };
+                convoCopy.messages.push(message);
+                convoCopy.latestMessageText = message.text;
+                return convoCopy;
+              } else {
+                return convo;
+              }
+            })
+        );
+      }
     },
     [setConversations, conversations]
   );
