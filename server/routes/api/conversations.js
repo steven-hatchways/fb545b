@@ -106,4 +106,36 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.post("/saveLastReadMessage",async (req, res, next) => {
+  try {
+    const conversationId = req.body.conversationId;
+    const messageId = req.body.messageId;
+    const userId = req.user.id;
+
+    const conversationPromise = Conversation.findOne({
+      where: { id: conversationId }
+    });
+
+    const messagePromise = Message.findOne({
+      where: { id: messageId }
+    });
+
+    const conversation = await conversationPromise;
+    const message = await messagePromise;
+
+    if(conversation.user1Id === userId) {
+      conversation.user1LastReadMessageId = message.id;
+    }
+    else if (conversation.user2Id === userId) {
+      conversation.user2LastReadMessageId = message.id;
+    }
+
+    await conversation.save();
+
+    res.sendStatus(204);
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
