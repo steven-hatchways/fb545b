@@ -120,8 +120,7 @@ router.post("/saveLastReadMessage",async (req, res, next) => {
       where: { id: messageId }
     });
 
-    const conversation = await conversationPromise;
-    const message = await messagePromise;
+    const [conversation, message] = await Promise.all(conversationPromise, messagePromise);
 
     if(conversation.user1Id === userId) {
       conversation.user1LastReadMessageId = message.id;
