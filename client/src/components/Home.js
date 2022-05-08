@@ -125,20 +125,16 @@ const Home = ({ user, logout }) => {
       }
     };
 
-    const latestMessageFromOtherUser = conversation.messages
-        .filter(m => m.senderId === conversation.otherUser.id)
-        .reduce((previousMessage, currentMessage) => {
-          if(currentMessage.createdAt > previousMessage.createdAt) {
-            return currentMessage;
-          }
-          else {
-            return previousMessage;
-          }
-    }, { createdAt:  (new Date(0).toISOString()) /* Unix Epoch */ });
+    let latestMessageFromOtherUser = null;
 
-    console.log("latestMessageFromOtherUser", latestMessageFromOtherUser);
+    for(let i = conversation.messages.length-1; i >= 0; i--) {
+      if(conversation.messages[i].senderId === conversation.otherUser.id) {
+        latestMessageFromOtherUser = conversation.messages[i];
+        break;
+      }
+    }
 
-    if(latestMessageFromOtherUser.id > -1) {
+    if(latestMessageFromOtherUser !== null) {
       await postLastReadMessage(conversation.id, latestMessageFromOtherUser.id);
 
       //update our local copy of current user's last read message
