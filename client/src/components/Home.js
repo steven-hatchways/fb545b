@@ -128,13 +128,15 @@ const Home = ({ user, logout }) => {
     const latestMessageFromOtherUser = conversation.messages
         .filter(m => m.senderId === conversation.otherUser.id)
         .reduce((previousMessage, currentMessage) => {
-          if(currentMessage.id > previousMessage.id) {
+          if(currentMessage.createdAt > previousMessage.createdAt) {
             return currentMessage;
           }
           else {
             return previousMessage;
           }
-    }, { id: -1 });
+    }, { createdAt:  (new Date(0).toISOString()) /* Unix Epoch */ });
+
+    console.log("latestMessageFromOtherUser", latestMessageFromOtherUser);
 
     if(latestMessageFromOtherUser.id > -1) {
       await postLastReadMessage(conversation.id, latestMessageFromOtherUser.id);
