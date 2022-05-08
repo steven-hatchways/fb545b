@@ -47,12 +47,12 @@ router.get("/", async (req, res, next) => {
         {
           model: Message,
           as: "user1LastReadMessage",
-          attributes: ["id"]
+          attributes: ["id", "createdAt"]
         },
         {
           model: Message,
           as: "user2LastReadMessage",
-          attributes: ["id"]
+          attributes: ["id", "createdAt"]
         }
       ],
     });

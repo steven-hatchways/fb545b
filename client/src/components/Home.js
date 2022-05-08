@@ -148,7 +148,8 @@ const Home = ({ user, logout }) => {
               currentUser: {
                 ...convo.currentUser,
                 lastReadMessage: {
-                  id: latestMessageFromOtherUser.id
+                  id: latestMessageFromOtherUser.id,
+                  createdAt: latestMessageFromOtherUser.createdAt
                 }
               }
             };

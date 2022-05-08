@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import { Box, Badge } from '@material-ui/core';
 import { BadgeAvatar, ChatContent } from '../Sidebar';
 import { makeStyles } from '@material-ui/core/styles';
@@ -32,10 +32,22 @@ const Chat = ({ conversation, setActiveChat }) => {
     debugger;
   }
 
-  const countUnreadMessages = () => conversation.messages
-    .filter(m => m.senderId !== currentUser.id)
-    .filter(m => currentUser?.lastReadMessage?.id && m.id > currentUser.lastReadMessage.id)
-    .length;
+  const countUnreadMessages = useMemo(() => {
+    return conversation.messages
+      .filter(m => m.senderId !== currentUser.id)
+      .filter(m => {
+        if(currentUser?.lastReadMessage?.createdAt === undefined) {
+           return true; // If we don't have a last read message, every message is unread
+        }
+        else if(m.createdAt > currentUser.lastReadMessage.createdAt) {
+          return true;
+        }
+        else {
+          return false;
+        }
+      })
+      .length;
+  }, [conversation.messages, currentUser.id, currentUser?.lastReadMessage?.createdAt]);
 
   return (
     <Box onClick={() => handleClick(conversation)} className={classes.root}>
@@ -45,9 +57,9 @@ const Chat = ({ conversation, setActiveChat }) => {
         online={otherUser.online}
         sidebar={true}
       />
-      <ChatContent conversation={conversation} hasUnreadMessages={countUnreadMessages() > 0} />
+      <ChatContent conversation={conversation} hasUnreadMessages={countUnreadMessages > 0} />
       <Badge
-          badgeContent={countUnreadMessages()}
+          badgeContent={countUnreadMessages}
           color="primary"
           className={classes.unread}
       />
