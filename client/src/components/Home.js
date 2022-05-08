@@ -105,8 +105,8 @@ const Home = ({ user, logout }) => {
   const markConversationMessagesAsRead = useCallback(async (conversation) => {
     const postLastReadMessage = async (conversationId, messageId) => {
       const saveLastReadMessage = async (conversationId, messageId) => {
-        const data = { conversationId, messageId };
-        await axios.post(`/api/conversations/saveLastReadMessage`, data);
+        const data = { messageId };
+        await axios.patch(`/api/conversations/${conversationId}/read-status`, data);
       };
 
       const sendLastReadMessage = (conversationId, messageId) => {

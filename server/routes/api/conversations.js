@@ -106,9 +106,9 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.post("/saveLastReadMessage",async (req, res, next) => {
+router.patch("/:conversationId/read-status",async (req, res, next) => {
   try {
-    const conversationId = req.body.conversationId;
+    const conversationId = req.params.conversationId;
     const messageId = req.body.messageId;
     const userId = req.user.id;
 
