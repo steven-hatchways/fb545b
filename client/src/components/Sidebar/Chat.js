@@ -45,7 +45,7 @@ const Chat = ({ conversation, setActiveChat }) => {
         online={otherUser.online}
         sidebar={true}
       />
-      <ChatContent conversation={conversation} />
+      <ChatContent conversation={conversation} hasUnreadMessages={countUnreadMessages() > 0} />
       <Badge
           badgeContent={countUnreadMessages()}
           color="primary"
