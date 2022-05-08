@@ -108,6 +108,10 @@ router.get("/", async (req, res, next) => {
 
 router.patch("/:conversationId/read-status",async (req, res, next) => {
   try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+
     const conversationId = req.params.conversationId;
     const messageId = req.body.messageId;
     const userId = req.user.id;
