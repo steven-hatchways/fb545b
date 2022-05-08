@@ -27,11 +27,7 @@ const Chat = ({ conversation, setActiveChat }) => {
   const handleClick = async (conversation) => {
     await setActiveChat(conversation.otherUser.username);
   };
-
-  if(currentUser === undefined) {
-    debugger;
-  }
-
+  
   const countUnreadMessages = useMemo(() => {
     return conversation.messages
       .filter(m => m.senderId !== currentUser.id)
