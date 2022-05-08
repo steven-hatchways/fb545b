@@ -78,24 +78,11 @@ const Home = ({ user, logout }) => {
     return data;
   };
 
-  const saveLastReadMessage = async (conversationId, messageId) => {
-    const data = { conversationId, messageId };
-    await axios.post(`/api/conversations/saveLastReadMessage`, data);
-  };
-
   const sendMessage = (data, body) => {
     socket.emit('new-message', {
       message: data.message,
       recipientId: body.recipientId,
       sender: data.sender,
-    });
-  };
-
-  const sendLastReadMessage = (conversationId, messageId) => {
-    socket.emit("last-read-message", {
-      conversationId,
-      messageId,
-      userId: user.id
     });
   };
 
@@ -115,16 +102,29 @@ const Home = ({ user, logout }) => {
     }
   };
 
-  const postLastReadMessage = async (conversationId, messageId) => {
-    try {
-      await saveLastReadMessage(conversationId, messageId);
-      sendLastReadMessage(conversationId, messageId);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const markConversationMessagesAsRead = useCallback(async (conversation) => {
+    const postLastReadMessage = async (conversationId, messageId) => {
+      const saveLastReadMessage = async (conversationId, messageId) => {
+        const data = { conversationId, messageId };
+        await axios.post(`/api/conversations/saveLastReadMessage`, data);
+      };
+
+      const sendLastReadMessage = (conversationId, messageId) => {
+        socket.emit("last-read-message", {
+          conversationId,
+          messageId,
+          userId: user.id
+        });
+      };
+
+      try {
+        await saveLastReadMessage(conversationId, messageId);
+        sendLastReadMessage(conversationId, messageId);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
     const latestMessageFromOtherUser = conversation.messages
         .filter(m => m.senderId === conversation.otherUser.id)
         .reduce((previousMessage, currentMessage) => {
@@ -160,7 +160,7 @@ const Home = ({ user, logout }) => {
         });
       });
     }
-  }, [setConversations, conversations]);
+  }, [socket, user.id]);
 
   const addNewConvo = useCallback(
     (recipientId, message) => {
