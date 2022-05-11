@@ -44,6 +44,16 @@ router.get("/", async (req, res, next) => {
           attributes: ["id", "username", "photoUrl"],
           required: false,
         },
+        {
+          model: Message,
+          as: "user1LastReadMessage",
+          attributes: ["id", "createdAt"]
+        },
+        {
+          model: Message,
+          as: "user2LastReadMessage",
+          attributes: ["id", "createdAt"]
+        }
       ],
     });
 
@@ -51,14 +61,32 @@ router.get("/", async (req, res, next) => {
       const convo = conversations[i];
       const convoJSON = convo.toJSON();
 
-      // set a property "otherUser" so that frontend will have easier access
+      // set a property "otherUser" and "currentUser" so that frontend will have easier access
       if (convoJSON.user1) {
         convoJSON.otherUser = convoJSON.user1;
         delete convoJSON.user1;
+
+        convoJSON.otherUser.lastReadMessage = convoJSON.user1LastReadMessage;
+
+        convoJSON.currentUser = {
+          id: req.user.id,
+          lastReadMessage: convoJSON.user2LastReadMessage
+        };
+
       } else if (convoJSON.user2) {
         convoJSON.otherUser = convoJSON.user2;
         delete convoJSON.user2;
+
+        convoJSON.otherUser.lastReadMessage = convoJSON.user2LastReadMessage;
+
+        convoJSON.currentUser = {
+          id: req.user.id,
+          lastReadMessage: convoJSON.user1LastReadMessage
+        };
       }
+
+      delete convoJSON.user1LastReadMessage;
+      delete convoJSON.user2LastReadMessage;
 
       // set property for online status of the other user
       if (onlineUsers.includes(convoJSON.otherUser.id)) {
@@ -73,6 +101,44 @@ router.get("/", async (req, res, next) => {
     }
 
     res.json(conversations);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/:conversationId/read-status",async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+
+    const conversationId = req.params.conversationId;
+    const messageId = req.body.messageId;
+    const userId = req.user.id;
+
+    const conversationPromise = Conversation.findOne({
+      where: { id: conversationId }
+    });
+
+    const messagePromise = Message.findOne({
+      where: { id: messageId }
+    });
+
+    const [conversation, message] = await Promise.all([conversationPromise, messagePromise]);
+
+    if(conversation.user1Id === userId) {
+      conversation.user1LastReadMessageId = message.id;
+    }
+    else if (conversation.user2Id === userId) {
+      conversation.user2LastReadMessageId = message.id;
+    }
+    else {
+      return res.sendStatus(403);
+    }
+
+    await conversation.save();
+
+    res.sendStatus(204);
   } catch (error) {
     next(error);
   }
