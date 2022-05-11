@@ -132,6 +132,9 @@ router.patch("/:conversationId/read-status",async (req, res, next) => {
     else if (conversation.user2Id === userId) {
       conversation.user2LastReadMessageId = message.id;
     }
+    else {
+      return res.sendStatus(403);
+    }
 
     await conversation.save();
 
